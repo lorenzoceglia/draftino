@@ -38,7 +38,7 @@ export function Layout() {
   return (
     <div className="min-h-screen bg-background">
       <AuctionHeader />
-      <main className="max-w-7xl mx-auto p-6">
+      <main className="mx-auto p-6">
         <nav className="flex space-x-1 mb-6 bg-muted p-1 rounded-lg flex-wrap">
           {tabs.map((tab) => {
             const Icon = tab.icon;

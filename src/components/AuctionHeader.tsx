@@ -70,7 +70,7 @@ export function AuctionHeader() {
 
   return (
     <header className="bg-gradient-field p-6 shadow-lg">
-      <div className="max-w-7xl mx-auto">
+      <div className=" mx-auto">
         <div className="flex items-center justify-between mb-6 flex-wrap">
           <div className="flex items-center gap-4">
             <h1 className="text-3xl font-bold text-primary-foreground">

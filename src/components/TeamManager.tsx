@@ -52,7 +52,7 @@ export function TeamManager() {
         </CardHeader>
         <CardContent>
           <div className="flex gap-3 items-end">
-            <div className="flex-1">
+            <div className="w-full">
               <Input
                 placeholder="Nome squadra"
                 value={newTeam.name}
@@ -61,7 +61,7 @@ export function TeamManager() {
                 }
               />
             </div>
-            <div className="w-32">
+            <div className="w-full">
               <Input
                 type="number"
                 placeholder="Budget"
