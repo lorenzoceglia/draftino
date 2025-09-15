@@ -21,6 +21,7 @@ export interface Player {
   price?: number;
   assignedTo?: string;
 }
+export type UploadSource = "file" | "auto";
 export interface Team {
   id: string;
   name: string;

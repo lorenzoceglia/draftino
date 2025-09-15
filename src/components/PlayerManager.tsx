@@ -1,12 +1,16 @@
 import React, { useState } from "react";
-import { Upload, Search, Filter } from "lucide-react";
+import {
+  Upload,
+  Search,
+  SparklesIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useAuctionStore } from "@/store/auctionStore";
 import { useToast } from "@/hooks/use-toast";
-import type { ClassicRole, MantraRole } from "@/types";
+import type { ClassicRole, MantraRole, UploadSource } from "@/types";
 
 export function PlayerManager() {
   const { mode, players, importPlayers } = useAuctionStore();
@@ -32,33 +36,39 @@ export function PlayerManager() {
 
   const availableRoles = mode === "classic" ? classicRoles : mantraRoles;
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleUpload = async (source: UploadSource, event?: React.ChangeEvent<HTMLInputElement>) => {
+    let data: unknown;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = JSON.parse(e.target?.result as string);
-        if (Array.isArray(data)) {
-          importPlayers(data);
-          toast({
-            title: "Import completato",
-            description: `Importati ${data.length} giocatori`,
-          });
-        } else {
-          throw new Error("Formato non valido");
-        }
-      } catch (error) {
-        toast({
-          title: "Errore",
-          description: "File JSON non valido",
-          variant: "destructive",
-        });
+    try {
+      if (source === "file") {
+        if (!event?.target.files?.[0]) return;
+        const file = event.target.files[0];
+        const text = await file.text();
+        data = JSON.parse(text);
+      } else if (source === "auto") {
+        const response = await fetch("/listone.json");
+        if (!response.ok) throw new Error("Impossibile caricare il file");
+        data = await response.json();
       }
-    };
-    reader.readAsText(file);
+
+      if (Array.isArray(data)) {
+        importPlayers(data);
+        toast({
+          title: "Import completato",
+          description: `Importati ${data.length} giocatori`,
+        });
+      } else {
+        throw new Error("Formato non valido");
+      }
+    } catch (error) {
+      toast({
+        title: "Errore",
+        description: source === "file" ? "File JSON non valido" : "File JSON non valido o non trovato",
+        variant: "destructive",
+      });
+    }
   };
+
 
   const filteredPlayers = players.filter((player) => {
     const matchesSearch =
@@ -68,7 +78,7 @@ export function PlayerManager() {
       ? player.role
       : [player.role];
     const matchesRole =
-      selectedRole === "all" || playerRoles.includes(selectedRole as any);
+      selectedRole === "all" || playerRoles.includes(selectedRole as ClassicRole | MantraRole);
     return matchesSearch && matchesRole;
   });
 
@@ -146,18 +156,26 @@ export function PlayerManager() {
                 </option>
               ))}
             </select>
-            <Button asChild variant="field">
-              <label>
-                <Upload className="w-4 h-4" />
-                Import JSON
-                <input
-                  type="file"
-                  accept=".json"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-              </label>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button onClick={() => handleUpload('auto')} asChild variant="field">
+                <label>
+                  <SparklesIcon className="w-4 h-4" />
+                  Import automatico
+                </label>
+              </Button>
+              <Button asChild variant="field">
+                <label>
+                  <Upload className="w-4 h-4" />
+                  Import da file
+                  <input
+                    type="file"
+                    accept=".json"
+                    onChange={(e) => handleUpload("file", e)}
+                    className="hidden"
+                  />
+                </label>
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -179,7 +197,7 @@ export function PlayerManager() {
                 <input
                   type="file"
                   accept=".json"
-                  onChange={handleFileUpload}
+                  onChange={(e) => handleUpload("file", e)}
                   className="hidden"
                 />
               </label>
