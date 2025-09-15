@@ -30,12 +30,6 @@ export interface Team {
   isUserTeam: boolean;
   players: Player[];
 }
-export interface Formation {
-  name: string;
-  roles: MantraRole[];
-  isComplete: boolean;
-  missingRoles: MantraRole[];
-}
 export interface AuctionState {
   mode: AuctionMode;
   teams: Team[];
@@ -47,10 +41,17 @@ export interface AuctionState {
   };
 }
 export const MANTRA_FORMATIONS = {
-  "3-4-3": ["P", "DS", "DC", "DD", "E", "M", "C", "B", "W", "T", "A"],
-  "4-3-3": ["P", "DS", "DC", "DC", "DD", "M", "C", "B", "W", "T", "A"],
-  "3-5-2": ["P", "DS", "DC", "DD", "E", "M", "C", "B", "W", "T", "A"],
-  "4-4-2": ["P", "DS", "DC", "DC", "DD", "E", "M", "C", "B", "T", "A"],
+  "3-4-3": ["P", "DC", "DC", ["DC","B"], "E", ["M","C"], "C", "E", ["W","A"],["W","A"], ["A","PC"]],
+  "3-4-1-2": ["P", "DC", "DC", ["DC","B"], "E", ["M","C"], "C", "E", "T", ["A","PC"], ["A","PC"]],
+  "3-4-2-1": ["P", "DC", "DC", ["DC","B"], "E", ["M","C"], "M", ["E","W"], "T", ["A","T"], ["A","PC"]],
+  "3-5-2": ["P", "DC", "DC", ["DC","B"], "E", "M", ["M","C"], "C", ["E","W"], ["A","PC"], ["A","PC"]],
+  "3-5-1-1": ["P", "DC", "DC", ["DC","B"], "M", "C", "M", ["E","W"], ["E","W"], ["A","T"], ["A","PC"]],
+  "4-3-3": ["P", "DD", "DC", "DC", "DS", ["M","C"], "M", "C", ["W","A"], ["A","PC"], ["A","PC"]],
+  "4-3-1-2": ["P", "DD", "DC", "DC", "DS", ["M","C"], "M", "C", "T", ["T","A","PC"], ["A","PC"]],
+  "4-4-2": ["P", "DD", "DC", "DC", "DS", ["M","C"], "C", "E", ["E","W"], ["A","PC"], ["A","PC"]],
+  "4-1-4-1": ["P", "DD", "DC", "DC", "DS", "M", "T", ["C","T"], ["E","W"], "W", ["A","PC"]],
+  "4-4-1-1": ["P", "DD", "DC", "DC", "DS", "M", "C", ["E","W"], ["E","W"], ["T","A"], ["A","PC"]],
+  "4-2-3-1": ["P", "DD", "DC", "DC", "DS", "M", ["M","C"], ["W","T"],"T" , ["W","A"], ["A","PC"]],
 } as const;
 
 export type FormationName = keyof typeof MANTRA_FORMATIONS;

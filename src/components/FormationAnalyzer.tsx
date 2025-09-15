@@ -7,6 +7,7 @@ import {
   MANTRA_FORMATIONS,
   type FormationName,
   type MantraRole,
+  Player,
 } from "@/types";
 
 export function FormationAnalyzer() {
@@ -41,41 +42,101 @@ export function FormationAnalyzer() {
   };
   const analyzeFormation = (formationName: FormationName) => {
     const formation = MANTRA_FORMATIONS[formationName];
-    const roleCounts: Record<MantraRole, number> = formation.reduce(
-      (acc, role) => {
-        acc[role] = (acc[role] || 0) + 1;
-        return acc;
-      },
-      {} as Record<MantraRole, number>,
-    );
+
     const analysis = {
       complete: true,
       missing: [] as MantraRole[],
-      excess: [] as MantraRole[],
+      excess: [] as string[],
+      lineup: [] as string[],
       coverage: 0,
     };
-    let satisfiedPositions = 0;
+
     const totalPositions = formation.length;
-    for (const [role, needed] of Object.entries(roleCounts)) {
-      const available = getPlayersByRole(role as MantraRole).length;
-      if (available < needed) {
-        analysis.complete = false;
-        for (let i = 0; i < needed - available; i++) {
-          analysis.missing.push(role as MantraRole);
-        }
-        satisfiedPositions += available;
-      } else {
-        satisfiedPositions += needed;
-        if (available > needed) {
-          for (let i = 0; i < available - needed; i++) {
-            analysis.excess.push(role as MantraRole);
-          }
+    let satisfiedPositions = 0;
+
+    const assignedPlayers = new Set<Player>();
+    const slotToPlayer = new Map<number, Player | null>();
+
+    // Ordina gli slot mettendo prima quelli con meno alternative
+    const sortedFormation = [...formation]
+      .map((slot, index) => ({ slot, index }))
+      .sort((a, b) => {
+        const lenA = Array.isArray(a.slot) ? a.slot.length : 1;
+        const lenB = Array.isArray(b.slot) ? b.slot.length : 1;
+        return lenA - lenB;
+      });
+
+    for (const { slot, index } of sortedFormation) {
+      const slotRoles = Array.isArray(slot) ? slot : [slot];
+
+      // Trova il giocatore migliore per questo slot
+      let bestPlayer: Player | null = null;
+
+      for (const role of slotRoles) {
+        const candidates = getPlayersByRole(role).filter(p => !assignedPlayers.has(p));
+
+        if (candidates.length > 0) {
+          // Scegli il giocatore con meno ruoli: lascia i multi-ruolo per slot flessibili
+          candidates.sort((a, b) => {
+            const aRoles = Array.isArray(a.role) ? a.role.length : 1;
+            const bRoles = Array.isArray(b.role) ? b.role.length : 1;
+            return aRoles - bRoles;
+          });
+
+          bestPlayer = candidates[0];
+          break;
         }
       }
+
+      slotToPlayer.set(index, bestPlayer);
+
+      if (bestPlayer) {
+        assignedPlayers.add(bestPlayer);
+        satisfiedPositions++;
+      } else {
+        analysis.complete = false;
+        analysis.missing.push(slotRoles[0]);
+      }
     }
+
+    // Popola lineup nell'ordine originale della formazione
+    for (let i = 0; i < formation.length; i++) {
+      const slot = formation[i];
+      const player = slotToPlayer.get(i);
+      const slotStr = Array.isArray(slot) ? slot.join('/') : slot;
+
+      if (player) {
+        const playerRoles = Array.isArray(player.role) ? player.role : [player.role];
+        analysis.lineup.push(`${slotStr} (${playerRoles.join('/')})`);
+      } else {
+        analysis.lineup.push(`⚠️ ${slotStr}`);
+      }
+    }
+
+    // Trova eventuali giocatori in eccesso
+    const allRoles = new Set<MantraRole>();
+    formation.forEach(slot => {
+      if (Array.isArray(slot)) slot.forEach(r => allRoles.add(r));
+      else allRoles.add(slot);
+    });
+
+    const allAssigned = new Set(assignedPlayers);
+
+    allRoles.forEach(role => {
+      const remaining = getPlayersByRole(role).filter(p => !allAssigned.has(p));
+      remaining.forEach(p => {
+        if (!assignedPlayers.has(p)) {
+          assignedPlayers.add(p);
+          const playerRoles = Array.isArray(p.role) ? p.role : [p.role];
+          analysis.excess.push(playerRoles.join('/'));
+        }
+      });
+    });
+
     analysis.coverage = (satisfiedPositions / totalPositions) * 100;
     return analysis;
   };
+
   const formationAnalyses = Object.keys(MANTRA_FORMATIONS).map(
     (formationName) => ({
       name: formationName as FormationName,
@@ -147,6 +208,25 @@ export function FormationAnalyzer() {
                   {Math.round(analysis.coverage)}%
                 </span>
               </div>
+
+              {analysis.lineup.length > 0 && (
+                <div className="mb-2">
+                  <p className="text-sm text-success font-medium mb-1">
+                    Schierati:
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {analysis.lineup.map((role, index) => (
+                      <Badge
+                        key={index}
+                        variant={role.includes('⚠️')  ? 'destructive' : 'success'}
+                        className="text-xs"
+                      >
+                        {role}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {analysis.missing.length > 0 && (
                 <div className="mb-2">
