@@ -162,11 +162,7 @@ export function TeamManager() {
                 <div
                   className="bg-primary h-2 rounded-full transition-all"
                   style={{
-                    width: `${
-                      ((team.initialBudget - team.budget) /
-                        team.initialBudget) *
-                      100
-                    }%`,
+                    width: `${(team.players.length / 28) * 100}%`,
                   }}
                 />
               </div>
