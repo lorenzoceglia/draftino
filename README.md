@@ -97,10 +97,4 @@ The players JSON must follow a structure like this:
 
 ---
 
-## 📜 License
-
-[MIT](./LICENSE)
-
----
-
 Made with ❤️ for all fantasy managers – _Draftino_ is your auction companion!
